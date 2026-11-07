@@ -454,10 +454,10 @@
       '<div class="total">' + esc(C.formatNumber(r.total)) +
       "<small>/" + r.max + "</small></div>" + '<div class="rings-box">' + rings + "</div>" +
       '<div class="score-notes">' + notes.join("") + "</div></div>" + ringPanel + "</section>" +
-      '<div class="review-body' + (r.items && r.items.length ? "" : " no-items") + '"><div class="review-main">' + main + "</div>" +
+      '<div class="review-body' + (r.items && r.items.length ? "" : " no-items") + '"><div class="review-main">' + main + nearBlock + "</div>" +
       '<div class="side side-top">' + sideTop.join("") + "</div>" +
       (sideBottom.length ? '<aside class="side side-bottom">' + sideBottom.join("") + "</aside>" : "") +
-      "</div>" + nearBlock + "</article>";
+      "</div></article>";
 
     const panel = byId("ring-panel");
     const ringBtns = box.querySelectorAll(".eq-live .ring");
