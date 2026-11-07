@@ -370,9 +370,24 @@
           'aria-label="' + esc(c.name) + ": " + esc(val) + '. Показать комментарий" title="' + esc(c.name) + " — " + esc(val) + '">' +
           '<i style="--h:' + h + '%"></i></button>';
       }).join("") + "</div>" +
-      '<p class="ring-hint hand">нажми на кружок — покажу пункт и комментарий</p>' +
-      '<div class="ring-panel" id="ring-panel" role="region" aria-live="polite" hidden>' +
-      '<p class="ring-head"><b class="ring-name"></b> <span class="ring-val"></span></p><p class="ring-text"></p></div>';
+      '<p class="ring-hint hand">' + (crits.length > 1 ? "жми на кружки — листай пункты" : "нажми на кружок") + "</p>";
+    // Панель комментария открыта сразу (первый пункт) — кольца переключают текст; на десктопе стоит справа.
+    const ringPanel = '<div class="ring-panel" id="ring-panel" role="region" aria-live="polite">' +
+      '<p class="ring-step"></p><p class="ring-head"><b class="ring-name"></b> <span class="ring-val"></span></p>' +
+      '<p class="ring-text"></p></div>';
+
+    // «Рядом по оценке»: та же шкала, ближайшие баллы — чтобы низ карточки не пустовал и было куда идти дальше.
+    const hidden = new Set([r.id].concat((r.history || []).map((h) => h.id)));
+    const near = R.filter((x) => !hidden.has(x.id) && x.max === r.max && x.title !== UNKNOWN)
+      .map((x) => ({ x, d: Math.abs(x.total - r.total) }))
+      .sort((a, b) => a.d - b.d || (a.x.datetime < b.x.datetime ? 1 : -1)).slice(0, 6).map((o) => o.x);
+    const nearBlock = near.length ? '<section class="section near" aria-label="Рядом по оценке"><h2>Рядом по оценке</h2>' +
+      '<ul class="near-grid">' + near.map((x) => {
+        const nx = names(x);
+        return '<li class="' + x.type + '"><a href="' + href(x) + '">' + cover(x, "near-cover") +
+          '<span class="t">' + nx.t + '</span><span class="a">' + nx.plainA + "</span>" +
+          '<span class="score">' + esc(C.formatScore(x)) + "</span></a></li>";
+      }).join("") + "</ul></section>" : "";
     let main = r.quote ? '<blockquote class="quote">' + esc(r.quote) + "</blockquote>" : "";
     if (!(r.items && r.items.length)) {
       main = r.comment ? '<p class="comment">' + esc(r.comment) + "</p>"
@@ -432,32 +447,31 @@
       (C.releaseLine(MEDIA.covers[String(r.id)], r.type)
         ? '<p class="release">' + esc(C.releaseLine(MEDIA.covers[String(r.id)], r.type)) + "</p>" : "") +
       "</header>" +
-      '<section class="scorebox" aria-label="Оценка"><figure class="cover-box">' + cover(r, "card-cover") +
+      '<section class="scorebox" aria-label="Оценка"><div class="score-left"><figure class="cover-box">' + cover(r, "card-cover") +
       (MEDIA.covers[String(r.id)] && MEDIA.covers[String(r.id)].album && r.type === "track"
         ? "<figcaption>" + esc(MEDIA.covers[String(r.id)].kind || "альбом") + " «" +
           esc(MEDIA.covers[String(r.id)].album) + "»</figcaption>" : "") + "</figure>" +
       '<div class="total">' + esc(C.formatNumber(r.total)) +
       "<small>/" + r.max + "</small></div>" + '<div class="rings-box">' + rings + "</div>" +
-      '<div class="score-notes">' + notes.join("") + "</div></section>" +
+      '<div class="score-notes">' + notes.join("") + "</div></div>" + ringPanel + "</section>" +
       '<div class="review-body' + (r.items && r.items.length ? "" : " no-items") + '"><div class="review-main">' + main + "</div>" +
       '<div class="side side-top">' + sideTop.join("") + "</div>" +
       (sideBottom.length ? '<aside class="side side-bottom">' + sideBottom.join("") + "</aside>" : "") +
-      "</div></article>";
+      "</div>" + nearBlock + "</article>";
 
     const panel = byId("ring-panel");
     const ringBtns = box.querySelectorAll(".eq-live .ring");
-    ringBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const same = btn.classList.contains("picked") && !panel.hidden;
-        ringBtns.forEach((b) => { b.classList.toggle("picked", !same && b === btn); b.setAttribute("aria-expanded", String(!same && b === btn)); });
-        if (same) { panel.hidden = true; return; }
-        const c = crits[Number(btn.dataset.i)];
-        panel.querySelector(".ring-name").textContent = c.name;
-        panel.querySelector(".ring-val").textContent = c.score != null ? C.formatNumber(c.score) + "/" + c.max : "без оценки";
-        panel.querySelector(".ring-text").textContent = c.text || "Комментария к этому пункту в посте нет.";
-        panel.hidden = false;
-      });
-    });
+    function showCrit(i) {
+      ringBtns.forEach((b, k) => { b.classList.toggle("picked", k === i); b.setAttribute("aria-expanded", String(k === i)); });
+      const c = crits[i];
+      panel.querySelector(".ring-step").textContent = crits.length > 1 ? "пункт " + (i + 1) + " из " + crits.length : "оценка";
+      panel.querySelector(".ring-name").textContent = c.name;
+      panel.querySelector(".ring-val").textContent = c.score != null ? C.formatNumber(c.score) + "/" + c.max : "без оценки";
+      panel.querySelector(".ring-text").textContent = c.text || "Комментария к этому пункту в посте нет.";
+      panel.classList.remove("pop"); void panel.offsetWidth; panel.classList.add("pop");
+    }
+    ringBtns.forEach((btn) => btn.addEventListener("click", () => showCrit(Number(btn.dataset.i))));
+    if (ringBtns.length) showCrit(0);
   }
 
   /* ------------------------------------------------------------ артисты */
