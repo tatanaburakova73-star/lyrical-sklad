@@ -940,7 +940,7 @@ html.gate-open, html.gate-open body { overflow: hidden; }
 .score-left { display: flex; flex-wrap: wrap; align-items: center; gap: 24px 40px; min-width: 0; }
 @media (min-width: 900px) {
   .scorebox { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 32px 48px; }
-  .ring-panel { position: sticky; top: 24px; min-height: 100%; }
+  .ring-panel { position: sticky; top: 24px; }
 }
 .ring-step { font: 700 22px/1 var(--hand-font); color: var(--hand); margin-bottom: 10px !important; }
 .ring-panel {
@@ -961,6 +961,23 @@ html.gate-open, html.gate-open body { overflow: hidden; }
 @media (prefers-reduced-motion: no-preference) {
   .ring-panel.pop .ring-head, .ring-panel.pop .ring-text, .ring-panel.pop .ring-step { animation: ring-pop .3s cubic-bezier(.34, 1.56, .64, 1); }
   @keyframes ring-pop { from { opacity: 0; translate: 0 -6px; } to { opacity: 1; translate: 0 0; } }
+}
+
+/* страница песни: без шапки сайта; сверху ссылка назад, затем обложка + оценка + кольца, под ними название */
+body[data-page="review"] .site-head { display: none; }
+.crumbs-back { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 14px; }
+.crumbs-back .crumbs-home { font-family: var(--display); font-size: 15px; text-decoration: none; color: var(--mute); }
+.scorebox.scorebox-top { margin-top: 14px; border-top: 0; padding-top: 10px; }
+.score-left .review-head { flex: 1 1 100%; margin: 0; padding: 0; border: 0; }
+.score-left .review-head .kicker { margin-bottom: 8px; }
+.score-left .review-title { font-size: clamp(30px, 6vw, 64px); margin: 0 0 6px; }
+.score-left .review-artist { margin: 0 0 4px; }
+@media (max-width: 520px) {
+  .scorebox-top .score-left { gap: 18px 18px; }
+  .scorebox-top .cover-box { max-width: 112px; }
+  .scorebox-top .card-cover { width: 112px; height: 112px; font-size: 34px; }
+  .scorebox-top .total { font-size: 58px; }
+  .scorebox-top .cover-box figcaption { font-size: 12px; }
 }
 
 /* «Рядом по оценке» — сетка обложек внизу карточки */
