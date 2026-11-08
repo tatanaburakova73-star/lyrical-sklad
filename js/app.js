@@ -443,12 +443,13 @@
       // Страница песни без шапки сайта: сверху только ссылка назад, затем обложка, оценка и кольца, под ними — название.
       '<nav class="crumbs crumbs-back" aria-label="Навигация"><a href="catalog.html">← Каталог разборов</a>' +
       '<a class="crumbs-home" href="index.html">Лирический склад</a></nav>' +
-      '<article><section class="scorebox scorebox-top" aria-label="Оценка"><div class="score-left"><figure class="cover-box">' + cover(r, "card-cover") +
+      '<article><section class="scorebox scorebox-top" aria-label="Оценка"><div class="score-left">' +
+      '<div class="total">' + esc(C.formatNumber(r.total)) + "<small>/" + r.max + "</small></div>" +
+      '<figure class="cover-box">' + cover(r, "card-cover") +
       (MEDIA.covers[String(r.id)] && MEDIA.covers[String(r.id)].album && r.type === "track"
         ? "<figcaption>" + esc(MEDIA.covers[String(r.id)].kind || "альбом") + " «" +
           esc(MEDIA.covers[String(r.id)].album) + "»</figcaption>" : "") + "</figure>" +
-      '<div class="total">' + esc(C.formatNumber(r.total)) +
-      "<small>/" + r.max + "</small></div>" + '<div class="rings-box">' + rings + "</div>" +
+      '<div class="rings-box">' + rings + "</div>" +
       '<header class="review-head"><p class="kicker">' + kicker + "</p>" +
       '<h1 class="review-title">' + (titleOf(r) == null ? '<span class="unk">Название не распознано</span>' : esc(titleOf(r))) + "</h1>" +
       '<p class="review-artist">' + n.a + "</p>" +
