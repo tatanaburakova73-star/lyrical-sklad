@@ -107,6 +107,30 @@
     return { count: max, full: whole, half: s < max && s - whole >= 0.5 ? 1 : 0, extra: Math.max(0, Math.round(s - max)) };
   }
 
+  /* Дуга пластинки-пункта: доля балла в процентах (0–100); без оценки — 0, сверх максимума (11/10) — 100. */
+  function fillPct(score, max) {
+    if (score == null || !max) return 0;
+    return Math.round(Math.min(Number(score) / max, 1) * 100);
+  }
+
+  /* Номер строки «как на обороте конверта»: А1…А6, Б1…Б6 (perSide строк на сторону). */
+  const SIDES = "АБВГДЕ";
+  function sideLabel(i, perSide) {
+    return SIDES[Math.floor(i / perSide)] + ((i % perSide) + 1);
+  }
+
+  /* Запрос каталога: ?q= из адреса, иначе #q= — так приходит поиск из шапки (хэш не уходит на сервер). */
+  function searchQuery(search, hash) {
+    const fromSearch = new URLSearchParams(search || "").get("q");
+    if (fromSearch) return fromSearch.trim();
+    return (new URLSearchParams(String(hash || "").replace(/^#/, "")).get("q") || "").trim();
+  }
+
+  function searchHref(q) {
+    const text = String(q == null ? "" : q).trim();
+    return text ? "catalog.html#q=" + encodeURIComponent(text) : "catalog.html";
+  }
+
   /* forms: [«разбор», «разбора», «разборов»] */
   function plural(n, forms) {
     const n10 = n % 10;
@@ -163,5 +187,5 @@
   }
 
   return { norm, pct, isRecognized, filterReviews, sortReviews, topReviews, findReview, filterArtists, sortArtists, dots, plural,
-    formatNumber, formatScore, formatDate, formatRelease, releaseLine, dailyWave };
+    formatNumber, formatScore, formatDate, formatRelease, releaseLine, dailyWave, fillPct, sideLabel, searchQuery, searchHref };
 });

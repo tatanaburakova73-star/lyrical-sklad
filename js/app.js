@@ -1,4 +1,4 @@
-/* Отрисовка страниц «Лирический склад». Данные — window.LS_DATA (data/reviews.js),
+/* Отрисовка страниц «Лирический склад» в оформлении «Винил». Данные — window.LS_DATA (data/reviews.js),
    логика поиска и сортировки — window.LSCore (js/core.js). */
 (function () {
   "use strict";
@@ -41,6 +41,8 @@
   const kind = (r) => (r.type === "album" ? "альбом" : "трек");
   const href = (r) => "review.html?id=" + r.id;
   const artistHref = (slug) => "artist.html?slug=" + encodeURIComponent(slug);
+  const coverOf = (r) => (MEDIA.covers || {})[String(r.id)] || {};
+  const arrow = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>';
 
   /* Имена артистов ссылками на их страницы; разделители («, », « feat. ») — как в посте. */
   function artistLinks(r) {
@@ -67,7 +69,7 @@
     };
   }
 
-  /* Заглушка без чужих картинок: градиент по имени и инициалы. */
+  /* Заглушка без чужих картинок: конверт с круглым вырезом, в нём этикетка с инициалами. */
   function initials(text) {
     const words = String(text || "?").replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).filter(Boolean);
     return esc(((words[0] || "?")[0] + (words[1] ? words[1][0] : "")).toUpperCase());
@@ -80,34 +82,70 @@
   }
 
   function stub(text, cls) {
-    return '<span class="pic stub ' + cls + '" style="--hue:' + hue(text) + '" aria-hidden="true">' +
-      initials(text) + "</span>";
+    return '<span class="pic stub ' + cls + '" style="--hue:' + hue(text) + '" aria-hidden="true"><i>' +
+      initials(text) + "</i></span>";
   }
 
-  function cover(r, cls) {
-    const c = MEDIA.covers[String(r.id)];
-    if (c && c.cover) {
-      return '<img class="pic ' + cls + '" src="' + esc(c.cover) + '" alt="" loading="lazy" width="300" height="300">';
+  function cover(r, cls, eager) {
+    const c = coverOf(r);
+    if (c.cover) {
+      return '<img class="pic ' + cls + '" src="' + esc(c.cover) + '" alt=""' + (eager ? "" : ' loading="lazy"') +
+        ' width="300" height="300">';
     }
     return stub(titleOf(r) || r.artist, cls);
   }
 
   function photo(a, cls) {
-    const m = MEDIA.artists[a.slug];
+    const m = (MEDIA.artists || {})[a.slug];
     if (m && m.photo) {
-      return '<img class="pic ' + cls + '" src="' + esc(m.photo) + '" alt="" loading="lazy" width="300" height="300">';
+      return '<img class="pic round ' + cls + '" src="' + esc(m.photo) + '" alt="" loading="lazy" width="300" height="300">';
     }
     return stub(a.name, cls + " round");
   }
 
-  /* Кружок-кольцо на каждый пункт оценки; у оценки из 10 — один кружок. */
+  /* Пластинка с фото артиста вместо этикетки. */
+  const record = (a, cls) => '<span class="rec">' + photo(a, cls) + "</span>";
+
+  /* Оценка числом, шкала — мелко: «80/90». */
+  function scoreHtml(r) {
+    return esc(C.formatNumber(r.total)) + "<small>/" + r.max + "</small>";
+  }
+
+  /* Оценка на обложке: наклонная наклейка у трека, бумажная лента «оби» у альбома. */
+  function mark(r) {
+    if (r.type === "album") {
+      return '<span class="obi" role="img" aria-label="' + esc("Альбом, оценка " + C.formatScore(r)) + '">' +
+        '<span class="w" aria-hidden="true">альбом</span><b>' + esc(C.formatNumber(r.total)) + "</b>" +
+        (r.max === 90 ? "<em>" + esc(C.formatNumber(r.score10)) + "</em>" : "") + "</span>";
+    }
+    return '<span class="stk" role="img" aria-label="' + esc("Оценка " + C.formatScore(r)) + '">' +
+      esc(C.formatNumber(r.total)) + "</span>";
+  }
+
+  /* Конверт с выехавшей пластинкой: этикетка — та же обложка, она вращается; в центре — оценка. */
+  function sleeve(r, eager) {
+    const c = coverOf(r).cover;
+    const n = C.formatNumber(r.total);
+    return '<span class="disc" aria-hidden="true"><span class="lab">' +
+      (c ? '<img class="rot" src="' + esc(c) + '" alt="">' : "") +
+      '<span class="c' + (n.length > 2 ? " long" : "") + '"><b>' + esc(n) + "</b><small>из " + r.max + "</small></span></span></span>" +
+      '<span class="cv">' + cover(r, "", eager) + "</span>";
+  }
+
+  /* Свечение: размытая копия обложки за блоком. */
+  function glow(el, r) {
+    const c = coverOf(r).cover;
+    if (el && c) el.innerHTML = '<img src="' + esc(c) + '" alt="">';
+  }
+
+  /* Кружок-пластинка на каждый пункт оценки в строке каталога; у оценки из 10 — один. */
   function eq(r) {
     const parts = r.items && r.items.length
-      ? r.items.map((i) => (i.score == null ? 0 : i.score / (i.max || 15)))
-      : [Math.min(r.total / r.max, 1)];
-    const cls = ["eq", r.type === "album" ? "eq-album" : "", parts.length === 1 ? "eq-single" : ""].join(" ");
+      ? r.items.map((i) => C.fillPct(i.score, i.max || 15))
+      : [C.fillPct(r.total, r.max)];
+    const cls = ["eq", parts.length === 1 ? "eq-single" : ""].join(" ");
     return '<span class="' + cls + '" aria-hidden="true">' +
-      parts.map((h) => '<i style="--h:' + Math.round(h * 100) + '%"></i>').join("") + "</span>";
+      parts.map((h) => '<i style="--h:' + h + '%"></i>').join("") + "</span>";
   }
 
   /* ------------------------------------------------------------ главная */
@@ -122,38 +160,61 @@
     const handle = byId("channel-count");
     if (handle) handle.textContent = count(st.tracks + st.albums, ["оценка", "оценки", "оценок"]) +
       ", " + count(ARTISTS.length, ["артист", "артиста", "артистов"]);
-    const strip = byId("artist-strip");
-    if (strip) {
-      strip.innerHTML = C.sortArtists(ARTISTS, "count").slice(0, 12).map((a) =>
-        '<li class="artist-card"><a href="' + artistHref(a.slug) + '">' + photo(a, "face") +
-        '<span class="name">' + esc(a.name) + '</span><span class="sub">' + count(a.count, FORMS.review) +
-        "</span></a></li>").join("");
+
+    const setAll = (id, text) => { const a = byId(id); if (a) a.innerHTML = esc(text) + arrow; };
+    setAll("all-top", "Весь каталог, " + (st.tracks + st.albums).toLocaleString("ru-RU"));
+    setAll("all-fresh", "Все разборы, " + R.length.toLocaleString("ru-RU"));
+    setAll("all-albums", "Все альбомы, " + st.albums.toLocaleString("ru-RU"));
+    setAll("all-artists", "Все артисты, " + ARTISTS.length.toLocaleString("ru-RU"));
+
+    // Первый экран: первое место каталога — конверт с выехавшей пластинкой, свет — от его обложки.
+    const first = C.topReviews(R, { type: "track", scale: 90, limit: 1 })[0];
+    if (first) {
+      const n = names(first);
+      glow(byId("hero-amb"), first);
+      byId("hero-disc").innerHTML = '<a class="sl big" href="' + href(first) + '" aria-label="' +
+        esc((titleOf(first) || "Без названия") + ", " + first.artist + ": оценка " + C.formatScore(first) + ". Открыть разбор") + '">' +
+        sleeve(first, true) + "</a>";
+      byId("now").innerHTML = '<p class="cap">Первое место в каталоге</p>' +
+        '<h2><a href="' + href(first) + '">' + n.t + "</a></h2>" +
+        '<p class="na">' + n.a + ", <b>" + esc(C.formatNumber(first.total)) + " из " + first.max + "</b></p>" +
+        '<a class="btn primary" href="' + href(first) + '">Открыть разбор</a>';
     }
 
-    wave();
-    tops(90);
-    document.querySelectorAll(".switch button").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".switch button").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
-        tops(Number(btn.dataset.scale));
+    rails(90, "rail-top");
+    rails(90, "rail-albums");
+    document.querySelectorAll(".switch").forEach((sw) => {
+      sw.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          sw.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+          rails(Number(btn.dataset.scale), sw.dataset.rail);
+        });
       });
     });
 
-    const allArtists = byId("all-artists");
-    if (allArtists && ARTISTS.length > 12) {
-      allArtists.textContent = "Ещё " + count(ARTISTS.length - 12, ["артист", "артиста", "артистов"]);
-    }
-
-    // Свежие сверху, без дат: первая запись крупно с обложкой, остальные — номер по порядку и обложка; тип — в подписи.
-    byId("fresh").innerHTML = C.sortReviews(R, "new").slice(0, 8).map((r, i) => {
+    // Свежие сверху, без дат — как на обороте конверта: сторона А и сторона Б.
+    byId("fresh").innerHTML = C.sortReviews(R, "new").slice(0, 12).map((r, i) => {
       const n = names(r);
-      const lead = i === 0 ? cover(r, "fresh-cover")
-        : '<span class="num" aria-hidden="true">' + (i + 1) + "</span>" + cover(r, "thumb");
-      return '<li class="' + r.type + '"><div class="line">' + lead +
-        '<span class="main"><a class="t stretch" href="' + href(r) + '">' + n.t + '</a><span class="a">' + n.a +
-        '<span class="kind">, ' + kind(r) + "</span></span></span>" +
-        '<span class="score">' + esc(C.formatScore(r)) + "</span></div></li>";
+      return '<li class="line ' + r.type + '"><span class="ix" aria-hidden="true">' + C.sideLabel(i, 6) + "</span>" +
+        cover(r, "thumb") +
+        '<span class="m"><a class="t stretch" href="' + href(r) + '">' + n.t + '</a><span class="a">' + n.a +
+        (r.type === "album" ? '<span class="kind">, альбом</span>' : "") + "</span></span>" +
+        '<span class="score" role="img" aria-label="' + esc("Оценка " + C.formatScore(r)) + '">' + scoreHtml(r) + "</span></li>";
     }).join("");
+
+    byId("artist-strip").innerHTML = C.sortArtists(ARTISTS, "count").slice(0, 16).map((a) =>
+      '<li class="art"><a href="' + artistHref(a.slug) + '">' + record(a, "face") +
+      "<b>" + esc(a.name) + "</b><small>" + count(a.count, FORMS.review) + "</small></a></li>").join("");
+
+    document.querySelectorAll(".arrows button").forEach((b) => {
+      b.addEventListener("click", () => {
+        const rail = b.closest(".section").querySelector(".rail");
+        const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        rail.scrollBy({ left: Number(b.dataset.dir) * rail.clientWidth * 0.8, behavior: calm ? "auto" : "smooth" });
+      });
+    });
+
+    wave();
 
     const meta = byId("foot-meta");
     if (meta) {
@@ -163,18 +224,24 @@
     }
   }
 
-  function tops(scale) {
-    renderTop(byId("top-tracks"), C.topReviews(R, { type: "track", scale: scale, limit: 10 }));
-    renderTop(byId("top-albums"), C.topReviews(R, { type: "album", scale: scale, limit: 8 }));
-  }
-
-  function renderTop(ol, list) {
-    ol.innerHTML = list.length ? list.map((r, i) => {
+  /* Ленты топа: треки — конверты с наклейкой и местом, альбомы — с «оби» и выглядывающей пластинкой. */
+  function rails(scale, id) {
+    const ul = byId(id);
+    if (!ul) return;
+    const isAlbums = id === "rail-albums";
+    const list = C.topReviews(R, { type: isAlbums ? "album" : "track", scale: scale, limit: isAlbums ? 14 : 15 });
+    ul.innerHTML = list.length ? list.map((r, i) => {
       const n = names(r);
-      return '<li><div class="line"><span class="rank">' + (i + 1) + "</span>" +
-        '<span class="main"><a class="t stretch" href="' + href(r) + '">' + n.t + '</a><span class="a">' + n.a + "</span></span>" +
-        '<span class="score">' + esc(C.formatScore(r)) + "</span></div></li>";
+      if (isAlbums) {
+        return '<li class="al line"><span class="sl album"><span class="disc" aria-hidden="true"><span class="lab"></span></span>' +
+          '<span class="cv">' + cover(r, "") + mark(r) + "</span></span>" +
+          '<a class="t clamp stretch" href="' + href(r) + '">' + n.t + '</a><span class="a oneline">' + n.a + "</span></li>";
+      }
+      return '<li class="tc line"><span class="cv">' + cover(r, "") + mark(r) + "</span>" +
+        '<span class="cap"><span class="rk" aria-hidden="true">' + (i + 1) + '</span><span class="m">' +
+        '<a class="t clamp stretch" href="' + href(r) + '">' + n.t + '</a><span class="a oneline">' + n.a + "</span></span></span></li>";
     }).join("") : '<li class="empty">В этой шкале пока нет разборов с распознанным названием.</li>';
+    ul.scrollLeft = 0;
   }
 
   /* «Звуковая дорожка» канала: полоса на каждый день с разборами. */
@@ -223,7 +290,6 @@
       const x = Math.min(Math.max(0, e.clientX - box.left - tip.offsetWidth / 2), box.width - tip.offsetWidth);
       tip.style.transform = "translate(" + x + "px, calc(-100% - 8px))";
       tip.classList.add("is-on");
-      svg.style.cursor = "pointer";
     });
     svg.addEventListener("mouseleave", () => {
       tip.classList.remove("is-on");
@@ -240,7 +306,8 @@
     const p = new URLSearchParams(location.search);
     const pick = (v, allowed, fallback) => (allowed.includes(v) ? v : fallback);
     const state = {
-      q: p.get("q") || "",
+      // запрос из адреса: ?q= или #q= (так приходит поиск из шапки — хэш не уходит на сервер)
+      q: C.searchQuery(location.search, location.hash),
       type: pick(p.get("type"), ["all", "track", "album"], "all"),
       sort: pick(p.get("sort"), ["new", "old", "score", "score-asc"], "score"),
       date: /^\d{4}-\d{2}-\d{2}$/.test(p.get("date") || "") ? p.get("date") : "",
@@ -311,7 +378,7 @@
     return '<li class="row ' + r.type + '"><div class="line">' + cover(r, "thumb") +
       '<span class="main"><a class="t stretch" href="' + href(r) + '">' + n.t + '</a><span class="a">' + n.a + "</span></span>" +
       '<span class="meta"><span class="tag ' + r.type + '">' + kind(r) + "</span>" + eq(r) + "</span>" +
-      '<span class="score">' + esc(C.formatScore(r)) + "</span></div></li>";
+      '<span class="score" role="img" aria-label="' + esc("Оценка " + C.formatScore(r)) + '">' + scoreHtml(r) + "</span></div></li>";
   }
 
   /* ------------------------------------------------------- карточка разбора */
@@ -321,7 +388,9 @@
     const id = Number(new URLSearchParams(location.search).get("id"));
     const found = C.findReview(R, id);
     if (!found) {
-      box.innerHTML = '<div class="error-box"><h1 class="page-title">Разбор не найден</h1>' +
+      box.innerHTML = '<nav class="crumbs crumbs-back" aria-label="Навигация"><a href="catalog.html">← Каталог разборов</a>' +
+        '<a class="crumbs-home" href="index.html">Лирический склад</a></nav>' +
+        '<div class="error-box"><h1 class="page-title">Разбор не найден</h1>' +
         '<p>В каталоге нет разбора с таким номером. Откройте <a href="catalog.html">каталог</a> и выберите разбор из списка.</p></div>';
       return;
     }
@@ -330,8 +399,10 @@
     if (found.old) history.replaceState(null, "", "?id=" + r.id);
     if (r.type === "album") document.body.classList.add("album-page");
     const n = names(r);
+    const c = coverOf(r);
     const plainTitle = titleOf(r) == null ? "Название не распознано" : titleOf(r);
     document.title = plainTitle + (r.artist !== UNKNOWN ? " — " + r.artist : "") + " | Лирический склад";
+    glow(byId("amb"), r);
 
     const kicker = '<span class="tag ' + r.type + '">' + kind(r) + "</span>" +
       '<span>разбор от <time datetime="' + esc(r.date) + '">' + esc(C.formatDate(r.date)) + "</time></span>" +
@@ -356,22 +427,21 @@
         '" target="_blank" rel="noopener">Поправка</a>: «' + esc(r.correction.text) + "»</p>");
     }
 
-    // Кольца под общей оценкой: по кольцу на пункт (у оценки из 10 — одно). Каждое кольцо — кнопка:
-    // по нажатию под кольцами появляется название пункта, балл и комментарий автора.
+    // Пластинки-пункты под общей оценкой: по пластинке на пункт (у оценки из 10 — одна). Дуга по краю — балл.
+    // Каждая — кнопка: по нажатию в панели появляется название пункта, балл и комментарий автора.
     const crits = r.items && r.items.length
       ? r.items.map((it) => ({ name: it.name, score: it.score, max: it.max || (r.max === 90 ? 15 : 10), text: it.text || "" }))
       : [{ name: "Оценка", score: r.total, max: r.max, text: r.comment || r.quote || "" }];
-    const rings = '<div class="eq eq-live' + (r.type === "album" ? " eq-album" : "") + (crits.length === 1 ? " eq-single" : "") +
-      '" role="group" aria-label="Пункты оценки — нажмите на кружок">' + crits.map((c, i) => {
-        const has = c.score != null;
-        const h = has ? Math.round(Math.min(c.score / c.max, 1) * 100) : 0;
-        const val = has ? C.formatNumber(c.score) + " из " + c.max : "без оценки";
+    const rings = '<div class="rings' + (crits.length === 1 ? " single" : "") +
+      '" role="group" aria-label="Пункты оценки — нажмите на пластинку">' + crits.map((k, i) => {
+        const has = k.score != null;
+        const val = has ? C.formatNumber(k.score) + " из " + k.max : "без оценки";
         return '<button type="button" class="ring" data-i="' + i + '" aria-expanded="false" aria-controls="ring-panel" ' +
-          'aria-label="' + esc(c.name) + ": " + esc(val) + '. Показать комментарий" title="' + esc(c.name) + " — " + esc(val) + '">' +
-          '<i style="--h:' + h + '%"></i></button>';
+          'aria-label="' + esc(k.name) + ": " + esc(val) + '. Показать комментарий" style="--h:' + C.fillPct(k.score, k.max) + '%">' +
+          '<span class="o"><b>' + (has ? esc(C.formatNumber(k.score)) : "–") + '</b></span><span class="nm">' + esc(k.name) + "</span></button>";
       }).join("") + "</div>" +
-      '<p class="ring-hint hand">' + (crits.length > 1 ? "жми на кружки — листай пункты" : "нажми на кружок") + "</p>";
-    // Панель комментария открыта сразу (первый пункт) — кольца переключают текст; на десктопе стоит справа.
+      (crits.length > 1 ? '<p class="ring-hint">Нажмите на пластинку, чтобы прочитать комментарий автора к пункту.</p>' : "");
+    // Панель комментария открыта сразу (первый пункт) — пластинки переключают текст; на десктопе стоит справа.
     const ringPanel = '<div class="ring-panel" id="ring-panel" role="region" aria-live="polite">' +
       '<p class="ring-step"></p><p class="ring-head"><b class="ring-name"></b> <span class="ring-val"></span></p>' +
       '<p class="ring-text"></p></div>';
@@ -384,9 +454,8 @@
     const nearBlock = near.length ? '<section class="section near" aria-label="Рядом по оценке"><h2>Рядом по оценке</h2>' +
       '<ul class="near-grid">' + near.map((x) => {
         const nx = names(x);
-        return '<li class="' + x.type + '"><a href="' + href(x) + '">' + cover(x, "near-cover") +
-          '<span class="t">' + nx.t + '</span><span class="a">' + nx.plainA + "</span>" +
-          '<span class="score">' + esc(C.formatScore(x)) + "</span></a></li>";
+        return '<li class="' + x.type + '"><a href="' + href(x) + '"><span class="cv">' + cover(x, "near-cover") + mark(x) + "</span>" +
+          '<span class="t">' + nx.t + '</span><span class="a">' + nx.plainA + "</span></a></li>";
       }).join("") + "</ul></section>" : "";
     let main = r.quote ? '<blockquote class="quote">' + esc(r.quote) + "</blockquote>" : "";
     if (!(r.items && r.items.length)) {
@@ -394,7 +463,7 @@
         : '<p class="comment unk">В посте только оценка, без текста.</p>';
     }
 
-    // Верх боковой колонки (на телефоне — сразу под оценкой): цитата, пометки, кнопки.
+    // Верх боковой колонки (на телефоне — сразу под оценкой): пометки, кнопки, прежние оценки.
     const sideTop = [];
     const derived = r.title === UNKNOWN && titleOf(r);
     if (derived) {
@@ -410,7 +479,7 @@
         (r.title !== UNKNOWN ? ", название — по посту-анонсу разбора." : ".") + "</p>");
     }
     sideTop.push('<p class="actions"><a class="btn primary" href="' + esc(r.url) +
-      '" target="_blank" rel="noopener">Читать в Telegram</a>' +
+      '" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg>Читать в Telegram</a>' +
       (r.audio_url ? '<a class="btn" href="' + esc(r.audio_url) + '" target="_blank" rel="noopener">Трек в Telegram</a>' : "") +
       "</p>");
     // Прежние оценки того же трека (от новой к старой) — сам разбор выше всегда последний.
@@ -418,14 +487,14 @@
       sideTop.push('<div class="history"><h2>Ранее оценивался</h2><ul class="mini">' + r.history.map((h) =>
         '<li><a href="' + esc(h.url) + '" target="_blank" rel="noopener"><span class="t">' +
         esc(C.formatDate(h.date)) + '<span class="sub">пост в Telegram</span></span>' +
-        '<span class="score">' + esc(C.formatScore(h)) + "</span></a></li>").join("") + "</ul></div>");
+        '<span class="score">' + scoreHtml(h) + "</span></a></li>").join("") + "</ul></div>");
     }
 
     // Низ: сравнения и другие разборы того же исполнителя.
     const sideBottom = [];
     if (r.comparisons && r.comparisons.length) {
-      sideBottom.push("<div><h2>Сравнения с другими оценками</h2><ul class=\"compare\">" + r.comparisons.map((c) =>
-        "<li>" + esc(c.text) + ' <a href="' + esc(c.url) + '" target="_blank" rel="noopener">пост</a></li>').join("") +
+      sideBottom.push("<div><h2>Сравнения с другими оценками</h2><ul class=\"compare\">" + r.comparisons.map((cmp) =>
+        "<li>" + esc(cmp.text) + ' <a href="' + esc(cmp.url) + '" target="_blank" rel="noopener">пост</a></li>').join("") +
         "</ul></div>");
     }
     const artistKey = (r.key || "").split("|")[1];
@@ -433,28 +502,28 @@
       const others = C.sortReviews(R.filter((x) => x.id !== r.id && (x.key || "").split("|")[1] === artistKey), "new").slice(0, 8);
       if (others.length) {
         sideBottom.push("<div><h2>Ещё разборы: " + esc(r.artist) + '</h2><ul class="mini">' + others.map((x) =>
-          '<li><a href="' + href(x) + '"><span class="t">' + names(x).t + '<span class="sub">' + kind(x) +
-          '</span></span><span class="score">' + esc(C.formatScore(x)) + "</span></a></li>").join("") +
+          '<li class="' + x.type + '"><a href="' + href(x) + '"><span class="t">' + names(x).t + '<span class="sub">' + kind(x) +
+          '</span></span><span class="score">' + scoreHtml(x) + "</span></a></li>").join("") +
           "</ul></div>");
       }
     }
 
+    const caption = c.album && r.type === "track"
+      ? "<figcaption>" + esc(c.kind || "альбом") + " «" + esc(c.album) + "»</figcaption>" : "";
+    const totalText = C.formatNumber(r.total);
     box.innerHTML =
-      // Страница песни без шапки сайта: сверху только ссылка назад, затем обложка, оценка и кольца, под ними — название.
+      // Страница песни без шапки сайта: сверху только ссылка назад, затем оценка, конверт и пластинки-пункты, под ними — название.
       '<nav class="crumbs crumbs-back" aria-label="Навигация"><a href="catalog.html">← Каталог разборов</a>' +
       '<a class="crumbs-home" href="index.html">Лирический склад</a></nav>' +
       '<article><section class="scorebox scorebox-top" aria-label="Оценка"><div class="score-left">' +
-      '<div class="total">' + esc(C.formatNumber(r.total)) + "<small>/" + r.max + "</small></div>" +
-      '<figure class="cover-box">' + cover(r, "card-cover") +
-      (MEDIA.covers[String(r.id)] && MEDIA.covers[String(r.id)].album && r.type === "track"
-        ? "<figcaption>" + esc(MEDIA.covers[String(r.id)].kind || "альбом") + " «" +
-          esc(MEDIA.covers[String(r.id)].album) + "»</figcaption>" : "") + "</figure>" +
+      '<div class="total' + (totalText.length > 2 ? " long" : "") + '">' + esc(totalText) + " <small>из " + r.max + "</small></div>" +
+      '<figure class="cover-box"><span class="sl' + (r.type === "album" ? " album" : "") + '">' + sleeve(r, true) + "</span>" +
+      caption + "</figure>" +
       '<div class="rings-box">' + rings + "</div>" +
       '<header class="review-head"><p class="kicker">' + kicker + "</p>" +
       '<h1 class="review-title">' + (titleOf(r) == null ? '<span class="unk">Название не распознано</span>' : esc(titleOf(r))) + "</h1>" +
       '<p class="review-artist">' + n.a + "</p>" +
-      (C.releaseLine(MEDIA.covers[String(r.id)], r.type)
-        ? '<p class="release">' + esc(C.releaseLine(MEDIA.covers[String(r.id)], r.type)) + "</p>" : "") +
+      (C.releaseLine(c, r.type) ? '<p class="release">' + esc(C.releaseLine(c, r.type)) + "</p>" : "") +
       "</header>" +
       '<div class="score-notes">' + notes.join("") + "</div></div>" + ringPanel + "</section>" +
       '<div class="review-body' + (r.items && r.items.length ? "" : " no-items") + '"><div class="review-main">' + main + nearBlock + "</div>" +
@@ -463,14 +532,14 @@
       "</div></article>";
 
     const panel = byId("ring-panel");
-    const ringBtns = box.querySelectorAll(".eq-live .ring");
+    const ringBtns = box.querySelectorAll(".rings .ring");
     function showCrit(i) {
       ringBtns.forEach((b, k) => { b.classList.toggle("picked", k === i); b.setAttribute("aria-expanded", String(k === i)); });
-      const c = crits[i];
+      const k = crits[i];
       panel.querySelector(".ring-step").textContent = crits.length > 1 ? "пункт " + (i + 1) + " из " + crits.length : "оценка";
-      panel.querySelector(".ring-name").textContent = c.name;
-      panel.querySelector(".ring-val").textContent = c.score != null ? C.formatNumber(c.score) + "/" + c.max : "без оценки";
-      panel.querySelector(".ring-text").textContent = c.text || "Комментария к этому пункту в посте нет.";
+      panel.querySelector(".ring-name").textContent = k.name;
+      panel.querySelector(".ring-val").textContent = k.score != null ? C.formatNumber(k.score) + " из " + k.max : "без оценки";
+      panel.querySelector(".ring-text").textContent = k.text || "Комментария к этому пункту в посте нет.";
       panel.classList.remove("pop"); void panel.offsetWidth; panel.classList.add("pop");
     }
     ringBtns.forEach((btn) => btn.addEventListener("click", () => showCrit(Number(btn.dataset.i))));
@@ -499,7 +568,7 @@
       byId("aline").textContent = list.length ? "Артистов: " + list.length.toLocaleString("ru-RU")
         : "Таких артистов нет. Проверьте написание.";
       grid.innerHTML = list.slice(0, state.shown).map((a) =>
-        '<li class="artist-card"><a href="' + artistHref(a.slug) + '">' + photo(a, "face") +
+        '<li class="artist-card"><a href="' + artistHref(a.slug) + '">' + record(a, "face") +
         '<span class="name">' + esc(a.name) + "</span>" +
         '<span class="sub">' + count(a.count, FORMS.review) + "</span>" +
         '<span class="sub">' + esc(avgText(a)) + "</span></a></li>").join("");
@@ -532,16 +601,16 @@
     const list = C.sortReviews(R.filter((r) => (r.artists || []).includes(a.slug)), "new");
     const section = (title, items) => (items.length ? '<section class="section-lite"><h2>' + title + "</h2>" +
       '<ul class="releases">' + items.map((r) => {
-        const c = MEDIA.covers[String(r.id)];
-        const album = c && c.album && r.type === "track" ? '<span class="sub">' + esc(c.kind || "альбом") + " «" + esc(c.album) + "»</span>" : "";
+        const c = coverOf(r);
+        const album = c.album && r.type === "track" ? '<span class="sub">' + esc(c.kind || "альбом") + " «" + esc(c.album) + "»</span>" : "";
         const feat = r.artists.length > 1 ? '<span class="sub">' + artistLinks(r) + "</span>" : "";
         return '<li class="' + r.type + '"><div class="line">' + cover(r, "rel") +
           '<span class="main"><a class="t stretch" href="' + href(r) + '">' + names(r).t + "</a>" + feat + album + "</span>" +
-          '<span class="score">' + esc(C.formatScore(r)) + "</span></div></li>";
+          '<span class="score" role="img" aria-label="' + esc("Оценка " + C.formatScore(r)) + '">' + scoreHtml(r) + "</span></div></li>";
       }).join("") + "</ul></section>" : "");
     box.innerHTML =
-      '<nav class="crumbs" aria-label="Навигация"><a href="artists.html">Все артисты</a></nav>' +
-      '<header class="artist-head">' + photo(a, "hero-face") + "<div>" +
+      '<nav class="crumbs" aria-label="Навигация"><a href="artists.html">← Все артисты</a></nav>' +
+      '<header class="artist-head">' + record(a, "hero-face") + "<div>" +
       '<h1 class="review-title">' + esc(a.name) + "</h1>" +
       '<p class="kicker"><span>' + count(a.count, FORMS.review) + "</span><span>" + esc(avgText(a)) + "</span>" +
       '<a href="catalog.html?artist=' + encodeURIComponent(a.slug) + '">в каталоге</a></p>' +

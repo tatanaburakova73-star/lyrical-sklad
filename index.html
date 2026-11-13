@@ -8,17 +8,17 @@
   <meta property="og:title" content="Лирический склад — оценки треков и альбомов">
   <meta property="og:description" content="Разборы песен и альбомов из телеграм-канала @lyricalsklad: баллы по пунктам и цитаты.">
   <meta property="og:type" content="website">
-  <meta name="theme-color" content="#0c0b0a">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='2' fill='%230c0b0a'/%3E%3Crect x='6' y='14' width='4' height='12' fill='%23f2a93b'/%3E%3Crect x='14' y='6' width='4' height='20' fill='%23f2a93b'/%3E%3Crect x='22' y='10' width='4' height='16' fill='%23f2a93b'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#0e0a0b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23070506' stroke='%234d3c41'/%3E%3Ccircle cx='16' cy='16' r='10.5' fill='none' stroke='%232c2125'/%3E%3Ccircle cx='16' cy='16' r='5.5' fill='%23f26b4f'/%3E%3Ccircle cx='16' cy='16' r='1.4' fill='%230e0a0b'/%3E%3C/svg%3E">
   <meta name="rating" content="adult">
   <link rel="preload" href="fonts/literata-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css?v=20261108c">
+  <link rel="stylesheet" href="css/style.css?v=20261113a">
 </head>
 <body data-page="home">
-  <header class="site-head">
+  <header class="site-head" id="top">
     <div class="wrap">
-      <a class="brand" href="index.html">Лирический склад</a>
-      <nav class="nav" aria-label="Разделы">
+      <a class="brand" href="index.html"><img src="img/avatar.jpg" alt="" width="34" height="34" onerror="this.remove()"><span class="brand-name">Лирический склад</span></a>
+      <nav class="nav tabs" aria-label="Разделы">
         <a class="nav-home" href="index.html" aria-current="page">Главная</a>
         <a href="catalog.html">Каталог</a>
         <a href="artists.html">Артисты</a>
@@ -26,20 +26,27 @@
         <a href="terms.html">Соглашение</a>
         <a href="https://t.me/lyricalsklad" rel="noopener" target="_blank">Канал</a>
       </nav>
+      <form class="search" role="search" aria-label="Поиск по каталогу" method="dialog">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" name="q" placeholder="Песня или артист" aria-label="Песня или артист" autocomplete="off" enterkeyhint="search">
+      </form>
     </div>
   </header>
 
   <main>
-    <section class="channel" aria-labelledby="site-title">
-      <div class="banner" aria-hidden="true">
-        <div class="banner-inner wrap"><span>Лирический склад</span></div>
-      </div>
-      <div class="wrap channel-row">
-        <span class="avatar-box" aria-hidden="true">
-          <img class="avatar" src="img/avatar.jpg" alt="" width="320" height="320" onerror="this.remove()"></span>
-        <div class="channel-info">
-          <p class="channel-handle">@lyricalsklad <span id="channel-count"></span></p>
-          <span class="hand">один человек и много наушников</span>
+    <section class="hero" aria-labelledby="site-title">
+      <div class="amb" id="hero-amb" aria-hidden="true"></div>
+      <div class="wrap hero-grid">
+        <div class="hero-text">
+          <div class="channel-row">
+            <span class="avatar-box" aria-hidden="true"><img class="avatar" src="img/avatar.jpg" alt="" width="320" height="320" onerror="this.remove()"></span>
+            <p class="channel-handle"><b>@lyricalsklad</b> <span id="channel-count"></span>
+              <span class="hand">один человек и много наушников</span></p>
+          </div>
+          <h1 class="channel-title" id="site-title"><span class="word">Лирический</span> <span class="word">склад</span></h1>
+          <p class="lede">Разборы песен и альбомов по пунктам из телеграм-канала. Треки разбирают прежде всего по тексту:
+            структура, смысл, образы, рифмы, атмосфера и то, насколько песня запоминается. К каждому пункту автор пишет, за что поставил балл.</p>
+          <div class="now" id="now"></div>
           <ul class="channel-links" aria-label="Ссылки канала">
             <li><a class="chip live" href="https://t.me/lyricalsklad" rel="noopener" target="_blank">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 3.5 2.9 10.7c-1.3.5-1.3 1.2-.2 1.6l4.8 1.5 1.8 5.6c.2.6.1.9.8.9.5 0 .7-.2 1-.5l2.3-2.2 4.8 3.5c.9.5 1.5.2 1.7-.8l3.1-14.8c.3-1.3-.5-1.9-1.4-1.5ZM8.2 13.4l10.4-6.6c.5-.3.9-.1.6.2l-8.9 8-.4 3.7-1.7-5.3Z"/></svg>
@@ -55,106 +62,119 @@
               Boosty <em>пока нет</em></span></li>
           </ul>
         </div>
-      </div>
-      <div class="wrap channel-name">
-        <h1 class="channel-title" id="site-title"><span class="word">Лирический</span> <span class="word">склад</span></h1>
-        <p class="lede">Оценки песен и альбомов из телеграм-канала. Треки разбирают прежде всего по тексту:
-          структура, смысл, образы, рифмы, атмосфера и то, насколько песня запоминается.</p>
+        <div class="hero-disc" id="hero-disc"></div>
       </div>
     </section>
 
-    <section class="hero wrap" aria-label="Разборы по дням">
-      <p class="facts" id="facts"></p>
-      <figure class="wave" id="wave">
-        <div class="wave-tip" id="wave-tip" role="status" aria-live="polite"></div>
-        <figcaption>
-          <span>Каждая полоса — день с разборами, высота — средняя оценка из 10. <span id="wave-range"></span></span>
-          <span class="hand">нажми на полосу — откроются разборы этого дня</span>
-        </figcaption>
-      </figure>
-    </section>
-
-    <section class="section wrap" aria-labelledby="tops-title">
-      <div class="section-head">
-        <div>
-          <h2 id="tops-title">Что зашло сильнее всего</h2>
-          <p class="section-note">Каждый трек и альбом по одному разу, по последней оценке. Шкалы у них разные, поэтому списки раздельные.</p>
+    <div class="wrap">
+      <section class="section" id="sec-top" aria-labelledby="tops-title">
+        <div class="sec-head">
+          <h2 id="tops-title">Топ по оценке</h2>
+          <div class="switch" role="group" aria-label="Шкала оценок треков" data-rail="rail-top">
+            <button type="button" data-scale="90" aria-pressed="true">Из 90</button>
+            <button type="button" data-scale="10" aria-pressed="false">Из 10</button>
+          </div>
+          <a class="all" href="catalog.html" id="all-top">Весь каталог<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+          <div class="arrows">
+            <button type="button" data-dir="-1" aria-label="Назад"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <button type="button" data-dir="1" aria-label="Вперёд"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </div>
         </div>
-        <div class="switch" role="group" aria-label="Шкала оценок">
-          <button type="button" data-scale="90" aria-pressed="true">Из 90</button>
-          <button type="button" data-scale="10" aria-pressed="false">Из 10</button>
-        </div>
-      </div>
-      <div class="tops">
-        <div>
-          <h3>Треки</h3>
-          <ol class="top" id="top-tracks"></ol>
-        </div>
-        <div class="col-albums">
-          <h3>Альбомы</h3>
-          <ol class="top albums" id="top-albums"></ol>
-        </div>
-      </div>
-    </section>
+        <p class="section-note">Треки — каждый по одному разу, по последней оценке. Шкалы из 90 и из 10 разные, поэтому списки раздельные.</p>
+        <ul class="rail" id="rail-top"></ul>
+      </section>
 
-    <section class="section wrap" aria-labelledby="artists-title">
-      <div class="section-head">
-        <h2 id="artists-title">Артисты</h2>
-        <a class="btn" href="artists.html" id="all-artists">Все артисты</a>
-      </div>
-      <ul class="artist-strip" id="artist-strip"></ul>
-    </section>
+      <section class="section" id="sec-fresh" aria-labelledby="fresh-title">
+        <div class="sec-head">
+          <h2 id="fresh-title">Новые разборы</h2>
+          <a class="all" href="catalog.html?sort=new" id="all-fresh">Все разборы<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+        </div>
+        <ol class="tl" id="fresh"></ol>
+      </section>
 
-    <section class="section wrap" aria-labelledby="fresh-title">
-      <div class="section-head">
-        <h2 id="fresh-title">Только что разобрал</h2>
-        <a class="btn" href="catalog.html">Листать всё подряд</a>
-      </div>
-      <ul class="fresh" id="fresh"></ul>
-    </section>
+      <section class="section" id="sec-albums" aria-labelledby="albums-title">
+        <div class="sec-head">
+          <h2 id="albums-title">Лучшие альбомы</h2>
+          <div class="switch" role="group" aria-label="Шкала оценок альбомов" data-rail="rail-albums">
+            <button type="button" data-scale="90" aria-pressed="true">Из 90</button>
+            <button type="button" data-scale="10" aria-pressed="false">Из 10</button>
+          </div>
+          <a class="all" href="catalog.html?type=album" id="all-albums">Все альбомы<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+          <div class="arrows">
+            <button type="button" data-dir="-1" aria-label="Назад"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <button type="button" data-dir="1" aria-label="Вперёд"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </div>
+        </div>
+        <ul class="rail" id="rail-albums"></ul>
+      </section>
 
-    <section class="section wrap" aria-labelledby="systems-title">
-      <div class="section-head">
-        <div>
+      <section class="section" id="sec-artists" aria-labelledby="artists-title">
+        <div class="sec-head">
+          <h2 id="artists-title">Артисты</h2>
+          <a class="all" href="artists.html" id="all-artists">Все артисты<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+          <div class="arrows">
+            <button type="button" data-dir="-1" aria-label="Назад"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <button type="button" data-dir="1" aria-label="Вперёд"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+          </div>
+        </div>
+        <ul class="rail" id="artist-strip"></ul>
+      </section>
+
+      <section class="section" id="sec-days" aria-labelledby="days-title">
+        <div class="sec-head">
+          <h2 id="days-title">Разборы по дням</h2>
+        </div>
+        <p class="facts" id="facts"></p>
+        <figure class="wave" id="wave">
+          <div class="wave-tip" id="wave-tip" role="status" aria-live="polite"></div>
+          <figcaption>
+            <span>Каждая полоса — день с разборами, высота — средняя оценка из 10. <span id="wave-range"></span></span>
+            <span class="hand">Нажмите на полосу — откроются разборы этого дня.</span>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="section" id="sec-systems" aria-labelledby="systems-title">
+        <div class="sec-head">
           <h2 id="systems-title">Как ставятся баллы</h2>
-          <p class="section-note">Система оценок в канале менялась дважды. Пункты и даты — по постам самого канала.</p>
         </div>
-      </div>
-      <div class="systems">
-        <article class="system">
-          <h3>Одна оценка из 10</h3>
-          <p class="when">с октября 2025 до июня 2026</p>
-          <p>Короткий отзыв и оценка вроде 8/10 или 7,5/10. Самым сильным трекам доставалось 11/10.</p>
-        </article>
-        <article class="system">
-          <h3>6 пунктов, всего 90</h3>
-          <p class="when">с 6 июня 2026</p>
-          <ol>
-            <li>Рифмы, композиция и структура — 20</li>
-            <li>Смысл — 20</li>
-            <li>Личное отношение — 20</li>
-            <li>Музыкальное сопровождение — 10</li>
-            <li>Легендарность — 10</li>
-            <li>Качество исполнения — 10</li>
-          </ol>
-          <p>Альбом в этой системе получал среднее по трекам.</p>
-        </article>
-        <article class="system">
-          <h3>6 пунктов по 15</h3>
-          <p class="when">с 14 июля 2026, <a href="https://t.me/lyricalsklad/11377" rel="noopener" target="_blank">пост о новой системе</a></p>
-          <ol>
-            <li>Структура</li>
-            <li>Смысловая цельность</li>
-            <li>Образы и метафоры</li>
-            <li>Рифмы, ритмика и подача</li>
-            <li>Атмосфера/вайб</li>
-            <li>Запоминаемость</li>
-          </ol>
-          <p>У альбомов свои пункты: средний уровень треков, хитовость, концептуальная ценность, общий вайб, стабильность и общее впечатление (<a href="https://t.me/lyricalsklad/11378" rel="noopener" target="_blank">пост</a>).
-            Перевод 90 баллов в оценку из 10 — по <a href="https://t.me/lyricalsklad/11993" rel="noopener" target="_blank">таблице автора</a>: 88–90 — это 11/10, 83–87 — 10/10, 76–82 — 9/10.</p>
-        </article>
-      </div>
-    </section>
+        <p class="section-note">Система оценок в канале менялась дважды. Пункты и даты — по постам самого канала.</p>
+        <div class="systems">
+          <article class="system">
+            <h3>Одна оценка из 10</h3>
+            <p class="when">с октября 2025 до июня 2026</p>
+            <p>Короткий отзыв и оценка вроде 8/10 или 7,5/10. Самым сильным трекам доставалось 11/10.</p>
+          </article>
+          <article class="system">
+            <h3>6 пунктов, всего 90</h3>
+            <p class="when">с 6 июня 2026</p>
+            <ol>
+              <li>Рифмы, композиция и структура — 20</li>
+              <li>Смысл — 20</li>
+              <li>Личное отношение — 20</li>
+              <li>Музыкальное сопровождение — 10</li>
+              <li>Легендарность — 10</li>
+              <li>Качество исполнения — 10</li>
+            </ol>
+            <p>Альбом в этой системе получал среднее по трекам.</p>
+          </article>
+          <article class="system">
+            <h3>6 пунктов по 15</h3>
+            <p class="when">с 14 июля 2026, <a href="https://t.me/lyricalsklad/11377" rel="noopener" target="_blank">пост о новой системе</a></p>
+            <ol>
+              <li>Структура</li>
+              <li>Смысловая цельность</li>
+              <li>Образы и метафоры</li>
+              <li>Рифмы, ритмика и подача</li>
+              <li>Атмосфера/вайб</li>
+              <li>Запоминаемость</li>
+            </ol>
+            <p>У альбомов свои пункты: средний уровень треков, хитовость, концептуальная ценность, общий вайб, стабильность и общее впечатление (<a href="https://t.me/lyricalsklad/11378" rel="noopener" target="_blank">пост</a>).
+              Перевод 90 баллов в оценку из 10 — по <a href="https://t.me/lyricalsklad/11993" rel="noopener" target="_blank">таблице автора</a>: 88–90 — это 11/10, 83–87 — 10/10, 76–82 — 9/10.</p>
+          </article>
+        </div>
+      </section>
+    </div>
   </main>
 
   <footer class="site-foot">
@@ -174,11 +194,12 @@
     </div>
   </footer>
 
-  <script src="data/reviews.js?v=20261108c"></script>
-  <script src="data/media.js?v=20261108c" onerror="window.LS_MEDIA = null"></script>
-  <script src="js/core.js?v=20261108c"></script>
-  <script src="js/app.js?v=20261108c"></script>
-  <script src="js/config.js?v=20261108c"></script>
-  <script src="js/legal.js?v=20261108c"></script>
+  <script src="data/reviews.js?v=20261113a"></script>
+  <script src="data/media.js?v=20261113a" onerror="window.LS_MEDIA = null"></script>
+  <script src="js/core.js?v=20261113a"></script>
+  <script src="js/app.js?v=20261113a"></script>
+  <script src="js/nav.js?v=20261113a"></script>
+  <script src="js/config.js?v=20261113a"></script>
+  <script src="js/legal.js?v=20261113a"></script>
 </body>
 </html>
